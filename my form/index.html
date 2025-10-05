@@ -4,7 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Post a Job</title>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <!-- Custom CSS -->
   <link rel="stylesheet" href="style.css">
+  <!-- Quill CSS -->
+  <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
 </head>
 <body>
   <div class="container">
@@ -14,91 +21,134 @@
       <div class="progress" id="progress"></div>
     </div>
 
-    <h2>Post a Job</h2>
-    <form id="jobForm">
+    <!-- FORM SECTION -->
+    <div id="formSection">
+      <h2>Post a Job</h2>
+      <form id="jobForm">
 
-      <!-- Job Details -->
-      <div class="card">
-        <h3>Job Details</h3>
-        <label>Job Title*</label>
-        <input type="text" name="job_title" placeholder="Enter Job Title" required>
+        <!-- Job Details -->
+        <div class="card">
+          <h3><i class="fa-solid fa-briefcase"></i> Job Details</h3>
+          <label><i class="fa-solid fa-pen"></i> Job Title*</label>
+          <input type="text" name="job_title" placeholder="Enter Job Title" required>
 
-        <label>Job Type*</label>
-        <select name="job_type" required>
-          <option value="">Select Job Type</option>
-          <option>Full-time</option>
-          <option>Part-time</option>
-          <option>Contract</option>
-          <option>Remote</option>
-        </select>
+          <label><i class="fa-solid fa-list-check"></i> Job Type*</label>
+          <select name="job_type" required>
+            <option value="">Select Job Type</option>
+            <option>Full-time</option>
+            <option>Part-time</option>
+            <option>Contract</option>
+            <option>Remote</option>
+            <option>Volunteer</option>
+            <option>Paid Intern</option>
+            <option>Unpaid Intern</option>
+          </select>
 
-        <label>Job Sector*</label>
-        <select name="job_sector" required>
-          <option value="">Select Job Sector</option>
-          <option>IT & Software</option>
-          <option>Design</option>
-          <option>Marketing</option>
-          <option>Finance</option>
-        </select>
+          <label><i class="fa-solid fa-industry"></i> Job Sector*</label>
+          <select name="job_sector" required>
+            <option value="">Select Job Sector</option>
+            <option>IT & Software</option>
+            <option>Design</option>
+            <option>Marketing</option>
+            <option>Accounting & Finance</option>
+            <option>Media & Communication</option>
+            <option>Health Care</option>
+            <option>Architecture & Urban Planning</option>
+            <option>Translation & Transcription</option>
+          </select>
+        </div>
+
+        <!-- Requirements -->
+        <div class="card">
+          <h3><i class="fa-solid fa-graduation-cap"></i> Requirements</h3>
+          <label><i class="fa-solid fa-book"></i> Education*</label>
+          <select name="education" required>
+            <option value="">Select Education</option>
+            <option>High School</option>
+            <option>Certificate</option>
+            <option>Bachelor's</option>
+            <option>Master's</option>
+            <option>PhD</option>
+            <option>Not Required</option>
+          </select>
+
+          <label><i class="fa-solid fa-user-tie"></i> Experience Level*</label>
+          <select name="experience" required>
+            <option value="">Select Experience</option>
+            <option>Entry Level</option>
+            <option>Mid Level</option>
+            <option>Senior Level</option>
+            <option>Expert</option>
+          </select>
+
+          <label><i class="fa-solid fa-venus-mars"></i> Gender Preference*</label>
+          <select name="gender" required>
+            <option value="">Select gender preference</option>
+            <option>Male</option>
+            <option>Female</option>
+            <option>Both</option>
+          </select>
+
+          <label><i class="fa-solid fa-lightbulb"></i> Skills (max 6)</label>
+          <input type="text" name="skills" placeholder="E.g., JavaScript, UI/UX, SEO">
+        </div>
+
+        <!-- Compensation & Location -->
+        <div class="card">
+          <h3><i class="fa-solid fa-dollar-sign"></i> Compensation & Location</h3>
+          <label><i class="fa-solid fa-money-bill"></i> Salary*</label>
+          <input type="number" name="salary" placeholder="Enter Salary Amount" required>
+
+          <label><i class="fa-solid fa-coins"></i> Currency*</label>
+          <select name="currency" required>
+            <option value="">Select Currency</option>
+            <option>ETB</option>
+            <option>USD</option>
+          </select>
+
+          <label><i class="fa-solid fa-earth-africa"></i> Country*</label>
+          <input type="text" name="country" placeholder="Enter Country" required>
+
+          <label><i class="fa-solid fa-city"></i> City*</label>
+          <input type="text" name="city" placeholder="Enter City" required>
+        </div>
+
+        <!-- Job Description -->
+        <div class="card">
+          <h3><i class="fa-solid fa-file-lines"></i> Job Description</h3>
+          <div id="editor" style="height: 200px; background: #fff;"></div>
+          <input type="hidden" name="description" id="hiddenDescription">
+        </div>
+
+        <!-- Buttons -->
+        <button type="button" id="previewBtn" class="secondary-btn">
+          <i class="fa-solid fa-eye"></i> Preview Job
+        </button>
+        <button type="submit" class="submit-btn">
+          <i class="fa-solid fa-paper-plane"></i> Post Job
+        </button>
+      </form>
+    </div>
+
+    <!-- PREVIEW SECTION -->
+    <div id="previewSection" style="display:none;">
+      <h2>Preview Job Post</h2>
+      <div id="previewContent" class="card"></div>
+      <div class="form-actions">
+        <button id="editJob" class="secondary-btn">
+          <i class="fa-solid fa-pen-to-square"></i> Edit
+        </button>
+        <button id="confirmSubmit" class="submit-btn">
+          <i class="fa-solid fa-paper-plane"></i> Post This Job
+        </button>
       </div>
+    </div>
 
-      <!-- Requirements -->
-      <div class="card">
-        <h3>Requirements</h3>
-        <label>Education*</label>
-        <select name="education" required>
-          <option value="">Select Education</option>
-          <option>High School</option>
-          <option>Bachelor's</option>
-          <option>Master's</option>
-          <option>PhD</option>
-        </select>
-
-        <label>Experience Level*</label>
-        <select name="experience" required>
-          <option value="">Select Experience</option>
-          <option>Entry Level</option>
-          <option>Mid Level</option>
-          <option>Senior Level</option>
-        </select>
-
-        <label>Skills (max 6)</label>
-        <input type="text" name="skills" placeholder="E.g., JavaScript, UI/UX, SEO">
-      </div>
-
-      <!-- Compensation & Location -->
-      <div class="card">
-        <h3>Compensation & Location</h3>
-        <label>Salary*</label>
-        <input type="number" name="salary" placeholder="Enter Salary Amount" required>
-
-        <label>Currency*</label>
-        <select name="currency" required>
-          <option value="">Select Currency</option>
-          <option>USD</option>
-          <option>EUR</option>
-          <option>GBP</option>
-          <option>KES</option>
-        </select>
-
-        <label>Country*</label>
-        <input type="text" name="country" placeholder="Enter Country" required>
-
-        <label>City*</label>
-        <input type="text" name="city" placeholder="Enter City" required>
-      </div>
-
-      <!-- Job Description -->
-      <div class="card">
-        <h3>Job Description</h3>
-        <textarea name="description" rows="6" placeholder="Describe the role, responsibilities, and perks..." required></textarea>
-      </div>
-
-      <!-- Submit -->
-      <button type="submit" class="submit-btn">Post Job</button>
-    </form>
   </div>
 
+  <!-- Quill JS must load BEFORE script.js -->
+  <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+  <!-- Your custom script -->
   <script src="script.js"></script>
 </body>
 </html>

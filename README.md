@@ -3,3 +3,5 @@
 "# tgbot" 
 "# tgbot2" 
 "# tgbot2" 
+"# telegram-bot" 
+"# tele-bot" 
