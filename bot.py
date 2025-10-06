@@ -17,19 +17,19 @@ import html
 import re
 
 # === CONFIG ===
-BOT_TOKEN = "8336822306:AAH8dJ9bfNCrwEmpF8TOSNpviSuqWxwsuDs"  # Replace with your bot token
-CHANNEL_ID = "-1003115930403"  # Replace with your channel ID (bot must be admin)
-WEBAPP_URL = "https://profound-cocada-4b5e21.netlify.app"  # Your Netlify form URL
+BOT_TOKEN = "8336822306:AAH8dJ9bfNCrwEmpF8TOSNpviSuqWxwsuDs"
+CHANNEL_ID = "-1003115930403"
+WEBAPP_URL = "https://telegram-bot-zeta-snowy.vercel.app/"  # ✅ no trailing slash
 
 
-# 🧹 Clean up Quill HTML -> plain text (Telegram-safe)
+# === HELPERS ===
 def clean_description(html_text):
-    text = re.sub(r"<[^>]+>", "", html_text or "")  # Remove HTML tags
-    text = html.unescape(text)  # Decode HTML entities
+    text = re.sub(r"<[^>]+>", "", html_text or "")
+    text = html.unescape(text)
     return text.strip()
 
 
-# /start command
+# === HANDLERS ===
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
         ["Post a Job", "My Company"],
@@ -37,77 +37,63 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ["Settings"]
     ]
     reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
-
-    await update.message.reply_text(
-        "👋 Welcome! Please choose an option:",
-        reply_markup=reply_markup
-    )
+    await update.message.reply_text("👋 Welcome! Please choose an option:", reply_markup=reply_markup)
 
 
-# Handle main menu buttons
 async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    text = update.message.text.strip()
+    text = update.message.text
 
     if text == "Post a Job":
-        # Inline button that opens your job form
         keyboard = InlineKeyboardMarkup([[
             InlineKeyboardButton(
-                text="📋 Open Job Form",
+                text="📝 Open Job Form",
                 web_app=WebAppInfo(url=WEBAPP_URL)
             )
         ]])
         await update.message.reply_text(
-            "Click below to open the job posting form:",
+            "Click below to fill out the job form:",
             reply_markup=keyboard
         )
-
     else:
         await update.message.reply_text(f"You selected: {text}")
 
 
-# Handle form submission from WebApp
+# ✅ Handle WebApp submission
 async def handle_webapp(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    try:
-        if not update.message.web_app_data:
-            return
+    print("📬 WebApp handler triggered!")
+    web_app_data = update.message.web_app_data
 
-        data = json.loads(update.message.web_app_data.data)
-        description = clean_description(data.get("description", ""))
+    if web_app_data:
+        try:
+            print("📥 Received WebApp data:", web_app_data.data)
+            data = json.loads(web_app_data.data)
+            description = clean_description(data.get("description", ""))
 
-        # Escape special characters for Markdown
-        def escape_md(text):
-            return re.sub(r'([_*\[\]()~`>#+\-=|{}.!])', r'\\\1', text or "")
+            message = (
+                f"📢 *New Job Posted!*\n\n"
+                f"💼 *{data.get('job_title', 'N/A')}*\n"
+                f"🏷 *Type:* {data.get('job_type', 'N/A')}\n"
+                f"📂 *Sector:* {data.get('job_sector', 'N/A')}\n"
+                f"🎓 *Education:* {data.get('education', 'N/A')}\n"
+                f"💡 *Experience:* {data.get('experience', 'N/A')}\n"
+                f"⚧ *Gender:* {data.get('gender', 'N/A')}\n"
+                f"🛠 *Skills:* {data.get('skills', 'N/A')}\n"
+                f"💰 *Salary:* {data.get('salary', 'N/A')} {data.get('currency', '')}\n"
+                f"🌍 *Location:* {data.get('city', 'N/A')}, {data.get('country', 'N/A')}\n\n"
+                f"📝 *Description:*\n{description}"
+            )
 
-        # Format job post message
-        message = (
-            f"📢 *New Job Posted!*\n\n"
-            f"💼 *{escape_md(data.get('job_title', 'N/A'))}*\n"
-            f"🏷 *Type:* {escape_md(data.get('job_type', 'N/A'))}\n"
-            f"📂 *Sector:* {escape_md(data.get('job_sector', 'N/A'))}\n"
-            f"🎓 *Education:* {escape_md(data.get('education', 'N/A'))}\n"
-            f"💡 *Experience:* {escape_md(data.get('experience', 'N/A'))}\n"
-            f"⚧ *Gender:* {escape_md(data.get('gender', 'N/A'))}\n"
-            f"🛠 *Skills:* {escape_md(data.get('skills', 'N/A'))}\n"
-            f"💰 *Salary:* {escape_md(data.get('salary', 'N/A'))} {escape_md(data.get('currency', ''))}\n"
-            f"🌍 *Location:* {escape_md(data.get('city', 'N/A'))}, {escape_md(data.get('country', 'N/A'))}\n\n"
-            f"📝 *Description:*\n{escape_md(description)}"
-        )
+            await context.bot.send_message(chat_id=CHANNEL_ID, text=message, parse_mode="Markdown")
+            await update.message.reply_text("✅ Job posted successfully to the channel!")
 
-        # ✅ Post directly to your channel
-        await context.bot.send_message(
-            chat_id=CHANNEL_ID,
-            text=message,
-            parse_mode="MarkdownV2"
-        )
-
-        # ✅ Confirm to user
-        await update.message.reply_text("✅ Your job was posted successfully to the channel!")
-
-    except Exception as e:
-        print("❌ Error posting job:", e)
-        await update.message.reply_text("⚠️ Error while posting the job. Please check your form data.")
+        except Exception as e:
+            print("❌ Error posting job:", e)
+            await update.message.reply_text("⚠️ Error while posting job. Please check your data.")
+    else:
+        print("⚠️ No WebApp data found in update.")
 
 
+# === MAIN ===
 def main():
     app = Application.builder().token(BOT_TOKEN).build()
 
