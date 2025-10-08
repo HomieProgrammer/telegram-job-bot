@@ -4,22 +4,23 @@ from telegram import (
 from telegram.ext import (
     Application, CommandHandler, MessageHandler, ContextTypes, filters
 )
-import json, html, re, os
 from flask import Flask, request
+import os, json, html, re, asyncio
 
 BOT_TOKEN = "8336822306:AAH8dJ9bfNCrwEmpF8TOSNpviSuqWxwsuDs"
 CHANNEL_ID = "-1003115930403"
 WEBAPP_URL = "https://telegram-bot-zeta-snowy.vercel.app/"
+WEBHOOK_URL = f"https://telegram-job-bot-3.onrender.com/{BOT_TOKEN}"
 
 app = Flask(__name__)
 
-# === HELPERS ===
+# === Helpers ===
 def clean_description(html_text):
     text = re.sub(r"<[^>]+>", "", html_text or "")
     text = html.unescape(text)
     return text.strip()
 
-# === TELEGRAM BOT ===
+# === Telegram Bot ===
 tg_app = Application.builder().token(BOT_TOKEN).build()
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -34,9 +35,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
     if text == "Post a Job":
-        keyboard = InlineKeyboardMarkup([[
-            InlineKeyboardButton("📝 Open Job Form", web_app=WebAppInfo(url=WEBAPP_URL))
-        ]])
+        keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("📝 Open Job Form", web_app=WebAppInfo(url=WEBAPP_URL))]])
         await update.message.reply_text("Click below to fill out the job form:", reply_markup=keyboard)
     else:
         await update.message.reply_text(f"You selected: {text}")
@@ -66,7 +65,7 @@ tg_app.add_handler(CommandHandler("start", start))
 tg_app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
 tg_app.add_handler(MessageHandler(filters.StatusUpdate.WEB_APP_DATA, handle_webapp))
 
-# === FLASK ENDPOINT ===
+# === Flask endpoints ===
 @app.route("/")
 def home():
     return "Bot is running!"
@@ -74,15 +73,13 @@ def home():
 @app.route(f"/{BOT_TOKEN}", methods=["POST"])
 def webhook():
     update = request.get_json(force=True)
-    tg_app.update_queue.put_nowait(Update.de_json(update, tg_app.bot))
+    asyncio.run(tg_app.process_update(Update.de_json(update, tg_app.bot)))
     return "ok", 200
+
+async def set_webhook():
+    await tg_app.bot.set_webhook(WEBHOOK_URL)
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
-    tg_app.run_webhook(
-        listen="0.0.0.0",
-        port=port,
-        url_path=BOT_TOKEN,
-        webhook_url=f"https://telegram-job-bot-3.onrender.com/{BOT_TOKEN}"
-    )
+    asyncio.get_event_loop().run_until_complete(set_webhook())
     app.run(host="0.0.0.0", port=port)
