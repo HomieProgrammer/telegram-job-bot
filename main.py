@@ -17,7 +17,9 @@ import html
 import re
 
 # === CONFIG ===
-BOT_TOKEN = "8336822306:AAH8dJ9bfNCrwEmpF8TOSNpviSuqWxwsuDs"
+import os
+BOT_TOKEN = os.environ.get("BOT_TOKEN")
+
 CHANNEL_ID = "-1003115930403"
 WEBAPP_URL = "https://telegram-bot-zeta-snowy.vercel.app"  # your frontend form URL
 
