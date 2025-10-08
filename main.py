@@ -1,32 +1,25 @@
-from flask import Flask, request
 from telegram import (
-    Bot,
-    Update,
     ReplyKeyboardMarkup,
     InlineKeyboardMarkup,
     InlineKeyboardButton,
+    Update,
     WebAppInfo
 )
 from telegram.ext import (
-    Dispatcher,
+    Application,
     CommandHandler,
     MessageHandler,
     filters,
     ContextTypes
 )
-import os
 import json
 import html
 import re
 
 # === CONFIG ===
-BOT_TOKEN = os.getenv("BOT_TOKEN", "8336822306:AAH8dJ9bfNCrwEmpF8TOSNpviSuqWxwsuDs")
+BOT_TOKEN = "8336822306:AAH8dJ9bfNCrwEmpF8TOSNpviSuqWxwsuDs"
 CHANNEL_ID = "-1003115930403"
-WEBAPP_URL = "https://telegram-bot-zeta-snowy.vercel.app/"
-
-bot = Bot(BOT_TOKEN)
-app = Flask(__name__)
-dispatcher = Dispatcher(bot, None, use_context=True)
+WEBAPP_URL = "https://telegram-bot-zeta-snowy.vercel.app"  # your frontend form URL
 
 # === HELPERS ===
 def clean_description(html_text):
@@ -46,8 +39,14 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
+
     if text == "Post a Job":
-        keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("📝 Open Job Form", web_app=WebAppInfo(url=WEBAPP_URL))]])
+        keyboard = InlineKeyboardMarkup([[ 
+            InlineKeyboardButton(
+                text="📝 Open Job Form",
+                web_app=WebAppInfo(url=WEBAPP_URL)
+            )
+        ]])
         await update.message.reply_text("Click below to fill out the job form:", reply_markup=keyboard)
     else:
         await update.message.reply_text(f"You selected: {text}")
@@ -55,6 +54,7 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def handle_webapp(update: Update, context: ContextTypes.DEFAULT_TYPE):
     print("📬 WebApp handler triggered!")
     web_app_data = update.message.web_app_data
+
     if web_app_data:
         try:
             print("📥 Received WebApp data:", web_app_data.data)
@@ -77,28 +77,20 @@ async def handle_webapp(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             await context.bot.send_message(chat_id=CHANNEL_ID, text=message, parse_mode="Markdown")
             await update.message.reply_text("✅ Job posted successfully to the channel!")
+
         except Exception as e:
             print("❌ Error posting job:", e)
             await update.message.reply_text("⚠️ Error while posting job. Please check your data.")
     else:
         print("⚠️ No WebApp data found in update.")
 
-# === SETUP DISPATCHER ===
-dispatcher.add_handler(CommandHandler("start", start))
-dispatcher.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
-dispatcher.add_handler(MessageHandler(filters.StatusUpdate.WEB_APP_DATA, handle_webapp))
+def main():
+    app = Application.builder().token(BOT_TOKEN).build()
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
+    app.add_handler(MessageHandler(filters.StatusUpdate.WEB_APP_DATA, handle_webapp))
+    print("🤖 Bot is running...")
+    app.run_polling()
 
-# === FLASK ROUTES ===
-@app.route('/')
-def home():
-    return "🤖 Bot is running via webhook!", 200
-
-@app.route(f'/{BOT_TOKEN}', methods=['POST'])
-def webhook():
-    update = Update.de_json(request.get_json(force=True), bot)
-    dispatcher.process_update(update)
-    return "ok", 200
-
-# === RUN SERVER LOCALLY ===
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 10000)))
+if __name__ == "__main__":
+    main()
