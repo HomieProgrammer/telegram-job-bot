@@ -35,7 +35,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
     if text == "Post a Job":
-        keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("📝 Open Job Form", web_app=WebAppInfo(url=WEBAPP_URL))]])
+        keyboard = InlineKeyboardMarkup([
+            [InlineKeyboardButton("📝 Open Job Form", web_app=WebAppInfo(url=WEBAPP_URL))]
+        ])
         await update.message.reply_text("Click below to fill out the job form:", reply_markup=keyboard)
     else:
         await update.message.reply_text(f"You selected: {text}")
@@ -61,6 +63,7 @@ async def handle_webapp(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await context.bot.send_message(chat_id=CHANNEL_ID, text=message, parse_mode="Markdown")
         await update.message.reply_text("✅ Job posted successfully!")
 
+# Register handlers
 tg_app.add_handler(CommandHandler("start", start))
 tg_app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
 tg_app.add_handler(MessageHandler(filters.StatusUpdate.WEB_APP_DATA, handle_webapp))
@@ -76,10 +79,13 @@ def webhook():
     asyncio.run(tg_app.process_update(Update.de_json(update, tg_app.bot)))
     return "ok", 200
 
-async def set_webhook():
+# === Startup ===
+async def startup():
+    await tg_app.initialize()
+    await tg_app.start()
     await tg_app.bot.set_webhook(WEBHOOK_URL)
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
-    asyncio.get_event_loop().run_until_complete(set_webhook())
+    asyncio.get_event_loop().run_until_complete(startup())
     app.run(host="0.0.0.0", port=port)
